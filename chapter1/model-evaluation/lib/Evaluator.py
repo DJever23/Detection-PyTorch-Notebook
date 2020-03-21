@@ -27,8 +27,8 @@ class Evaluator:
             gt_class = gt_boxes[c]#取当前类别的所有GT框
             #{'1': [[14.0, 56.0, 50.0, 100.0, 0], [50.0, 90.0, 150.0, 189.0, 0], [458.0, 657.0, 580.0, 742.0, 0]]}
             npos = num_pos[c]#取当前类别GT框的数量
-            dects = sorted(dects, key=lambda conf: conf[5], reverse=True)
-            #按[12.0, 58.0, 53.0, 96.0, 0.87, '1']的第6个值进行排序，且是从大到小排序
+            dects = sorted(dects, key=lambda conf: conf[4], reverse=True)
+            #按[12.0, 58.0, 53.0, 96.0, 0.87, '1']的第5个值也就是得分进行排序，且是从大到小排序
             print('dects',dects)
             TP = np.zeros(len(dects))
             FP = np.zeros(len(dects))
@@ -60,16 +60,16 @@ class Evaluator:
                     FP[d] = 1
             print('FP',FP)#[0,0,1]
             print('TP',TP)#[1,1,0]
-            acc_FP = np.cumsum(FP)#[0,0,1]，这里为什么要累加？
-            acc_TP = np.cumsum(TP)#[1,2,2]
+            acc_FP = np.cumsum(FP)#[0,0,1],FP累加，即在第n个样本时有几个TP和FP
+            acc_TP = np.cumsum(TP)#[1,2,2],TP累加
             print('acc_FP',acc_FP)
             print('acc_TP',acc_TP)
-            rec = acc_TP / npos#[0.33333333 0.66666667 0.66666667]
+            rec = acc_TP / npos#[0.33333333 0.66666667 0.66666667]，计算每一个点的recall
             print('rec',rec)
             prec = np.divide(acc_TP, (acc_FP + acc_TP))#acc_TP除以(acc_FP + acc_TP)，即[1,2,2]除以[1,2,3]
             print('prec',prec)#[1.         1.         0.66666667]
             print(' ')
-            [ap, mpre, mrec, ii] = Evaluator.CalculateAveragePrecision(rec, prec)
+            [ap, mpre, mrec, ii] = Evaluator.CalculateAveragePrecision(rec, prec)#计算AP
             print('ap,mpre,mrec,ii',[ap, mpre, mrec, ii])
             r = {
                 'class': c,
@@ -106,13 +106,13 @@ class Evaluator:
         mrec.append(0)
         [mrec.append(e) for e in rec]
         mrec.append(1)
-        #mrec=[0,0.33333333,0.66666667,0.66666667,1]
+        #mrec=[0,0.33333333,0.66666667,0.66666667,1],插值的recall
         print('mrec',mrec)
         mpre = []
         mpre.append(0)
         [mpre.append(e) for e in prec]
         mpre.append(0)
-        #mpre=[0,1.,1.,0.66666667,0]
+        #mpre=[0,1.,1.,0.66666667,0],插值的精确度
         print('mpre',mpre)
 
         for i in range(len(mpre) - 1, 0, -1):
